@@ -1,122 +1,132 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import React from "react";
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import { RouterProvider, useRouter, ProtectedRoute, PermissionRoute } from "./routes/Router";
+import { Header } from "./components/Header";
+import { LandingView } from "./components/LandingView";
+import { RegisterView } from "./components/RegisterView";
+import { LoginView } from "./components/LoginView";
+import { DashboardView } from "./components/DashboardView";
+import { RolesView } from "./components/RolesView";
+import { PermissionsView } from "./components/PermissionsView";
+import { EmployeesView } from "./components/EmployeesView";
+import { ProfileView } from "./components/ProfileView";
+import { ProductsView } from "./components/ProductsView";
+import { InventoryView } from "./components/InventoryView";
+import { SuppliersView } from "./components/SuppliersView";
+import { UnauthorizedView } from "./components/UnauthorizedView";
+import "./App.css";
 
-function App() {
-  const [count, setCount] = useState(0)
+const MainContent: React.FC = () => {
+  const { user, isLoading } = useAuth();
+  const { currentPath, navigate } = useRouter();
+
+  if (isLoading) {
+    return (
+      <div className="app-loading-screen">
+        <div className="spinner" />
+        <p>Connecting to Smart Inventory backend...</p>
+      </div>
+    );
+  }
+
+  const renderRoute = () => {
+    switch (currentPath) {
+      case "/register":
+        return <RegisterView onSuccess={() => navigate("/dashboard")} onNavigateLogin={() => navigate("/login")} />;
+      case "/login":
+        return <LoginView onSuccess={() => navigate("/dashboard")} onNavigateRegister={() => navigate("/register")} />;
+      case "/dashboard":
+        return (
+          <ProtectedRoute>
+            <DashboardView />
+          </ProtectedRoute>
+        );
+      case "/products":
+        return (
+          <ProtectedRoute>
+            <PermissionRoute requiredPermission="PRODUCT_VIEW">
+              <ProductsView />
+            </PermissionRoute>
+          </ProtectedRoute>
+        );
+      case "/inventory":
+        return (
+          <ProtectedRoute>
+            <PermissionRoute requiredPermission="STOCK_VIEW">
+              <InventoryView />
+            </PermissionRoute>
+          </ProtectedRoute>
+        );
+      case "/suppliers":
+        return (
+          <ProtectedRoute>
+            <PermissionRoute requiredPermission="SUPPLIER_VIEW">
+              <SuppliersView />
+            </PermissionRoute>
+          </ProtectedRoute>
+        );
+      case "/members":
+        return (
+          <ProtectedRoute>
+            <PermissionRoute requiredPermission="EMPLOYEE_VIEW">
+              <EmployeesView />
+            </PermissionRoute>
+          </ProtectedRoute>
+        );
+      case "/roles":
+        return (
+          <ProtectedRoute>
+            <RolesView />
+          </ProtectedRoute>
+        );
+      case "/permissions":
+      case "/authorization":
+        return (
+          <ProtectedRoute>
+            <PermissionsView />
+          </ProtectedRoute>
+        );
+      case "/profile":
+        return (
+          <ProtectedRoute>
+            <ProfileView />
+          </ProtectedRoute>
+        );
+      case "/unauthorized":
+        return (
+          <ProtectedRoute>
+            <UnauthorizedView />
+          </ProtectedRoute>
+        );
+      case "/":
+      default:
+        if (user) {
+          return <DashboardView />;
+        }
+        return <LandingView onNavigate={(path) => navigate(path.startsWith("/") ? path : `/${path}`)} />;
+    }
+  };
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+    <div className="app-layout">
+      <Header />
+      <main className="app-main-content">{renderRoute()}</main>
+      <footer className="app-footer">
+        <div className="footer-content">
+          <span>Smart Inventory RBAC Foundation &bull; PostgreSQL 17 + Prisma Engine</span>
+          <span className="footer-tag">Production Phase 1: Authentication, Tenants, Roles & Permissions</span>
         </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+      </footer>
+    </div>
+  );
+};
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+export default function App() {
+  return (
+    <AuthProvider>
+      <RouterProvider>
+        <MainContent />
+      </RouterProvider>
+    </AuthProvider>
+  );
 }
-
-export default App
